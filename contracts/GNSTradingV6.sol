@@ -88,18 +88,18 @@ contract GNSTradingV6{
 
         uint spreadReductionP = _spreadReductionId > 0 ? storageT.spreadReductionsP(_spreadReductionId-1) : 0;
 
-        require(storageT.openTradesCount(msg.sender, t.pairIndex) + storageT.pendingMarketOpenCount(msg.sender, t.pairIndex) 
-            + storageT.openLimitOrdersCount(msg.sender, t.pairIndex) < storageT.maxTradesPerPair(), 
+        require(storageT.openTradesCount(msg.sender, t.pairIndex) + storageT.pendingMarketOpenCount(msg.sender, t.pairIndex)
+            + storageT.openLimitOrdersCount(msg.sender, t.pairIndex) < storageT.maxTradesPerPair(),
             "MAX_TRADES_PER_PAIR");
 
-        require(storageT.pendingOrderIdsCount(msg.sender) < storageT.maxPendingMarketOrders(), 
+        require(storageT.pendingOrderIdsCount(msg.sender) < storageT.maxPendingMarketOrders(),
             "MAX_PENDING_ORDERS");
 
         require(t.positionSizeDai <= maxPosDai, "ABOVE_MAX_POS");
         require(t.positionSizeDai * t.leverage >= pairsStored.pairMinLevPosDai(t.pairIndex), "BELOW_MIN_POS");
 
-        require(t.leverage > 0 && t.leverage >= pairsStored.pairMinLeverage(t.pairIndex) 
-            && t.leverage <= pairsStored.pairMaxLeverage(t.pairIndex), 
+        require(t.leverage > 0 && t.leverage >= pairsStored.pairMinLeverage(t.pairIndex)
+            && t.leverage <= pairsStored.pairMaxLeverage(t.pairIndex),
             "LEVERAGE_INCORRECT");
 
         require(_spreadReductionId == 0 || storageT.nfts(_spreadReductionId-1).balanceOf(msg.sender) > 0,
@@ -137,8 +137,8 @@ contract GNSTradingV6{
 
         }else{
             uint orderId = aggregator.getPrice(
-                t.pairIndex, 
-                AggregatorInterfaceV6.OrderType.MARKET_OPEN, 
+                t.pairIndex,
+                AggregatorInterfaceV6.OrderType.MARKET_OPEN,
                 t.positionSizeDai * t.leverage
             );
 
@@ -149,7 +149,7 @@ contract GNSTradingV6{
                         t.pairIndex,
                         0, 0,
                         t.positionSizeDai,
-                        0, 
+                        0,
                         t.buy,
                         t.leverage,
                         t.tp,
@@ -171,18 +171,18 @@ contract GNSTradingV6{
 
     // Close trade (MARKET)
     function closeTradeMarket(uint _pairIndex, uint _index) external notContract notDone{
-        
+
         StorageInterfaceV5.Trade memory t = storageT.openTrades(msg.sender, _pairIndex, _index);
         StorageInterfaceV5.TradeInfo memory i = storageT.openTradesInfo(msg.sender, _pairIndex, _index);
 
-        require(storageT.pendingOrderIdsCount(msg.sender) < storageT.maxPendingMarketOrders(), 
+        require(storageT.pendingOrderIdsCount(msg.sender) < storageT.maxPendingMarketOrders(),
             "MAX_PENDING_ORDERS");
         require(!i.beingMarketClosed, "ALREADY_BEING_CLOSED");
         require(t.leverage > 0, "NO_TRADE");
 
         uint orderId = storageT.priceAggregator().getPrice(
-            _pairIndex, 
-            AggregatorInterfaceV6.OrderType.MARKET_CLOSE, 
+            _pairIndex,
+            AggregatorInterfaceV6.OrderType.MARKET_CLOSE,
             t.initialPosToken * t.leverage * i.tokenPriceDai / PRECISION
         );
 
@@ -198,8 +198,8 @@ contract GNSTradingV6{
 
     // Manage limit order (OPEN)
     function updateOpenLimitOrder(
-        uint _pairIndex, 
-        uint _index, 
+        uint _pairIndex,
+        uint _index,
         uint _price,        // PRECISION
         uint _tp,
         uint _sl
@@ -257,9 +257,9 @@ contract GNSTradingV6{
         require(t.leverage > 0, "NO_TRADE");
 
         uint maxSlDist = t.openPrice * MAX_SL_P / 100 / t.leverage;
-        require(_newSl == 0 || (t.buy ? _newSl >= t.openPrice - maxSlDist : _newSl <= t.openPrice + maxSlDist), 
+        require(_newSl == 0 || (t.buy ? _newSl >= t.openPrice - maxSlDist : _newSl <= t.openPrice + maxSlDist),
             "SL_TOO_BIG");
-        
+
         require(block.number - i.slLastUpdated >= limitOrdersTimelock, "LIMIT_TIMELOCK");
 
         AggregatorInterfaceV6 aggregator = storageT.priceAggregator();
@@ -273,7 +273,7 @@ contract GNSTradingV6{
             uint levPosDai = t.initialPosToken * i.tokenPriceDai * t.leverage;
 
             t.initialPosToken -= storageT.handleDevGovFees(
-                t.pairIndex, 
+                t.pairIndex,
                 levPosDai / aggregator.tokenPriceDai(),
                 false,
                 false
@@ -283,26 +283,26 @@ contract GNSTradingV6{
 
             uint orderId = aggregator.getPrice(
                 _pairIndex,
-                AggregatorInterfaceV6.OrderType.UPDATE_SL, 
+                AggregatorInterfaceV6.OrderType.UPDATE_SL,
                 levPosDai / PRECISION
             );
 
             aggregator.storePendingSlOrder(
-                orderId, 
+                orderId,
                 AggregatorInterfaceV6.PendingSl(msg.sender, _pairIndex, _index, t.openPrice, t.buy, _newSl)
             );
-            
+
             emit SlUpdateInitiated(msg.sender, _pairIndex, _index, _newSl, orderId);
         }
     }
 
     // Execute limit order
     function executeNftOrder(
-        StorageInterfaceV5.LimitOrder _orderType, 
-        address _trader, 
-        uint _pairIndex, 
+        StorageInterfaceV5.LimitOrder _orderType,
+        address _trader,
+        uint _pairIndex,
         uint _index,
-        uint _nftId, 
+        uint _nftId,
         uint _nftType
     ) external notContract notDone{
 
@@ -312,7 +312,7 @@ contract GNSTradingV6{
         require(storageT.nfts(_nftType-1).ownerOf(_nftId) == msg.sender, "NO_NFT");
         require(block.number >= storageT.nftLastSuccess(_nftId) + storageT.nftSuccessTimelock(),
             "SUCCESS_TIMELOCK");
-        
+
         require(_orderType == StorageInterfaceV5.LimitOrder.OPEN ? storageT.hasOpenLimitOrder(_trader, _pairIndex, _index)
             : t.leverage > 0, "NO_TRADE");
         require(_orderType != StorageInterfaceV5.LimitOrder.SL || t.sl > 0, "NO_SL");
@@ -326,7 +326,7 @@ contract GNSTradingV6{
         );
 
         if(!nftIncentives.triggered(triggeredLimitId) || nftIncentives.timedOut(triggeredLimitId)){
-            
+
             uint leveragedPosDai;
 
             if(_orderType == StorageInterfaceV5.LimitOrder.OPEN){
@@ -340,9 +340,9 @@ contract GNSTradingV6{
             storageT.transferLinkToAggregator(msg.sender, _pairIndex, leveragedPosDai);
 
             uint orderId = aggregator.getPrice(
-                _pairIndex, 
-                _orderType == StorageInterfaceV5.LimitOrder.OPEN ? 
-                    AggregatorInterfaceV6.OrderType.LIMIT_OPEN : 
+                _pairIndex,
+                _orderType == StorageInterfaceV5.LimitOrder.OPEN ?
+                    AggregatorInterfaceV6.OrderType.LIMIT_OPEN :
                     AggregatorInterfaceV6.OrderType.LIMIT_CLOSE,
                 leveragedPosDai
             );
@@ -373,7 +373,7 @@ contract GNSTradingV6{
         StorageInterfaceV5.PendingMarketOrder memory o = storageT.reqID_pendingMarketOrder(_order);
         StorageInterfaceV5.Trade memory t = o.trade;
 
-        require(o.block > 0 && block.number >= o.block + marketOrdersTimeout, 
+        require(o.block > 0 && block.number >= o.block + marketOrdersTimeout,
             "WAIT_TIMEOUT");
         require(t.trader == msg.sender, "NOT_YOUR_ORDER");
         require(t.leverage > 0, "WRONG_MARKET_ORDER_TYPE");
@@ -388,7 +388,7 @@ contract GNSTradingV6{
         StorageInterfaceV5.PendingMarketOrder memory o = storageT.reqID_pendingMarketOrder(_order);
         StorageInterfaceV5.Trade memory t = o.trade;
 
-        require(o.block > 0 && block.number >= o.block + marketOrdersTimeout, 
+        require(o.block > 0 && block.number >= o.block + marketOrdersTimeout,
             "WAIT_TIMEOUT");
         require(t.trader == msg.sender, "NOT_YOUR_ORDER");
         require(t.leverage == 0, "WRONG_MARKET_ORDER_TYPE");

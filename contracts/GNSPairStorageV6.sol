@@ -61,7 +61,7 @@ contract GNSPairsStorageV6 {
 
     event GroupAdded(uint index, string name);
     event GroupUpdated(uint index);
-    
+
     event FeeAdded(uint index, string name);
     event FeeUpdated(uint index);
 
@@ -72,7 +72,7 @@ contract GNSPairsStorageV6 {
 
     // Modifiers
     modifier onlyGov(){ require(msg.sender == storageT.gov(), "GOV_ONLY"); _; }
-    
+
     modifier groupListed(uint _groupIndex){
         require(groups[_groupIndex].minLeverage > 0, "GROUP_NOT_LISTED");
         _;
@@ -102,10 +102,10 @@ contract GNSPairsStorageV6 {
     // Manage pairs
     function addPair(Pair calldata _pair) public onlyGov feedOk(_pair.feed) groupListed(_pair.groupIndex) feeListed(_pair.feeIndex){
         require(!isPairListed[_pair.from][_pair.to], "PAIR_ALREADY_LISTED");
-        
+
         pairs[pairsCount] = _pair;
         isPairListed[_pair.from][_pair.to] = true;
-        
+
         emit PairAdded(pairsCount++, _pair.from, _pair.to);
     }
     function addPairs(Pair[] calldata _pairs) external{
@@ -120,7 +120,7 @@ contract GNSPairsStorageV6 {
         p.feed = _pair.feed;
         p.spreadP = _pair.spreadP;
         p.feeIndex = _pair.feeIndex;
-        
+
         emit PairUpdated(_pairIndex);
     }
 
@@ -161,10 +161,10 @@ contract GNSPairsStorageV6 {
     // Fetch relevant info for order (aggregator)
     function pairJob(uint _pairIndex) external returns(string memory, string memory, bytes32, uint){
         require(msg.sender == address(storageT.priceAggregator()), "AGGREGATOR_ONLY");
-        
+
         Pair memory p = pairs[_pairIndex];
         require(isPairListed[p.from][p.to], "PAIR_NOT_LISTED");
-        
+
         return (p.from, p.to, groups[p.groupIndex].job, currentOrderId++);
     }
 
@@ -192,20 +192,20 @@ contract GNSPairsStorageV6 {
     }
 
     // Getters (fees)
-    function pairOpenFeeP(uint _pairIndex) external view returns(uint){ 
+    function pairOpenFeeP(uint _pairIndex) external view returns(uint){
         return fees[pairs[_pairIndex].feeIndex].openFeeP;
     }
-    function pairCloseFeeP(uint _pairIndex) external view returns(uint){ 
-        return fees[pairs[_pairIndex].feeIndex].closeFeeP; 
+    function pairCloseFeeP(uint _pairIndex) external view returns(uint){
+        return fees[pairs[_pairIndex].feeIndex].closeFeeP;
     }
-    function pairOracleFeeP(uint _pairIndex) external view returns(uint){ 
-        return fees[pairs[_pairIndex].feeIndex].oracleFeeP; 
+    function pairOracleFeeP(uint _pairIndex) external view returns(uint){
+        return fees[pairs[_pairIndex].feeIndex].oracleFeeP;
     }
-    function pairNftLimitOrderFeeP(uint _pairIndex) external view returns(uint){ 
-        return fees[pairs[_pairIndex].feeIndex].nftLimitOrderFeeP; 
+    function pairNftLimitOrderFeeP(uint _pairIndex) external view returns(uint){
+        return fees[pairs[_pairIndex].feeIndex].nftLimitOrderFeeP;
     }
-    function pairReferralFeeP(uint _pairIndex) external view returns(uint){ 
-        return fees[pairs[_pairIndex].feeIndex].referralFeeP; 
+    function pairReferralFeeP(uint _pairIndex) external view returns(uint){
+        return fees[pairs[_pairIndex].feeIndex].referralFeeP;
     }
     function pairMinLevPosDai(uint _pairIndex) external view returns(uint){
         return fees[pairs[_pairIndex].feeIndex].minLevPosDai;

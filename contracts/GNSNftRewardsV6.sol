@@ -21,7 +21,7 @@ contract GNSNftRewardsV6 {
     // Custom data types
     struct TriggeredLimit{ address first; address[] sameBlock; uint block; }
     struct TriggeredLimitId{ address trader; uint pairIndex; uint index; StorageInterfaceV5.LimitOrder order; }
-    
+
     enum OpenLimitOrderType{ LEGACY, REVERSAL, MOMENTUM }
 
     // State
@@ -32,7 +32,7 @@ contract GNSNftRewardsV6 {
     mapping(address => mapping(uint => uint)) public roundOrdersToClaim;    // orders to claim from a round (out of 50)
 
     mapping(address => uint) public tokensToClaim;                          // rewards other than pool (first & same block)
-    
+
     mapping(
         address => mapping(
             uint => mapping(
@@ -57,7 +57,7 @@ contract GNSNftRewardsV6 {
     event TriggeredSameBlock(TriggeredLimitId id, address bot);
     event TriggerUnregistered(TriggeredLimitId id);
     event TriggerRewarded(TriggeredLimitId id, address first, uint sameBlockCount, uint reward);
-    
+
     event PoolTokensClaimed(address bot, uint fromRound, uint toRound, uint tokens);
     event TokensClaimed(address bot, uint tokens);
 
@@ -101,12 +101,12 @@ contract GNSNftRewardsV6 {
     }
     function storeTriggerSameBlock(TriggeredLimitId calldata _id, address _bot) external onlyTrading{
         TriggeredLimit storage t = triggeredLimits[_id.trader][_id.pairIndex][_id.index][_id.order];
-        
+
         require(t.block == block.number, "TOO_LATE");
         require(t.sameBlock.length < sameBlockLimit, "SAME_BLOCK_LIMIT");
-        
+
         t.sameBlock.push(_bot);
-        
+
         emit TriggeredSameBlock(_id, _bot);
     }
     function unregisterTrigger(TriggeredLimitId calldata _id) external onlyCallbacks{
@@ -159,7 +159,7 @@ contract GNSNftRewardsV6 {
 
         tokensClaimed[msg.sender] += tokens;
         tokensClaimedTotal += tokens;
-        
+
         emit PoolTokensClaimed(msg.sender, _fromRound, _toRound, tokens);
     }
     function claimTokens() external{

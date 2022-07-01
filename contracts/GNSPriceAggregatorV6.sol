@@ -8,7 +8,7 @@ pragma solidity 0.8.11;
 
 contract GNSPriceAggregatorV6 is ChainlinkClient {
     using Chainlink for Chainlink.Request;
-    
+
     // Contracts (constant)
     StorageInterfaceV5 constant storageT = StorageInterfaceV5(0xaee4d11a16B2bc65EDD6416Fb626EB404a6D65BD);
     LpInterfaceV5 constant tokenDaiLp = LpInterfaceV5(0x6E53cB6942e518376E9e763554dB1A45DDCd25c4);
@@ -64,7 +64,7 @@ contract GNSPriceAggregatorV6 is ChainlinkClient {
         nodes = _nodes;
         pairsStorage = _pairsStorage;
         nftRewards = _nftRewards;
-        
+
         setChainlinkToken(0xb0897686c545045aFc77CF20eC7A532E3120E0F1);
     }
 
@@ -132,16 +132,16 @@ contract GNSPriceAggregatorV6 is ChainlinkClient {
     ) external onlyTrading returns(uint){
 
         (string memory from, string memory to, bytes32 job, uint orderId) = pairsStorage.pairJob(_pairIndex);
-        
+
         Chainlink.Request memory linkRequest = buildChainlinkRequest(job, address(this), this.fulfill.selector);
         linkRequest.add("from", from);
         linkRequest.add("to", to);
 
         uint linkFeePerNode = linkFee(_pairIndex, _leveragedPosDai) / nodes.length;
-        
+
         orders[orderId] = Order(
-            _pairIndex, 
-            _orderType, 
+            _pairIndex,
+            _orderType,
             linkFeePerNode,
             true
         );
